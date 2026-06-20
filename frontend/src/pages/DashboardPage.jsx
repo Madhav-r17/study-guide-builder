@@ -15,29 +15,55 @@ export default function DashboardPage() {
     0
   );
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h1>📊 Dashboard</h1>
+ return (
+  <div style={{ padding: "30px" }}>
+    <h1>📊 Dashboard</h1>
 
+    <div
+      style={{
+        border: "2px solid #333",
+        padding: "20px",
+        borderRadius: "10px",
+        marginBottom: "20px"
+      }}
+    >
       <h2>Total Notes: {totalNotes}</h2>
-
-      <hr />
-
-{stats.map((item) => (
-  <div
-    key={item.category}
-    style={{
-      border: "1px solid #444",
-      padding: "15px",
-      margin: "10px",
-      borderRadius: "10px"
-    }}
-  >
-    <h3>
-      {item.category || "Uncategorized"}: {item.count}
-    </h3>
-  </div>
-))}
     </div>
-  );
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: "20px"
+      }}
+    >
+      {stats.map((item) => (
+        <div
+          key={item.category}
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "10px",
+            padding: "20px",
+            boxShadow:
+              "0 2px 5px rgba(0,0,0,0.1)"
+          }}
+        >
+          <h3>
+            {item.category || "Uncategorized"}
+          </h3>
+
+          <p
+            style={{
+              fontSize: "24px",
+              fontWeight: "bold"
+            }}
+          >
+            {item.count}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 }
