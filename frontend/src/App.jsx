@@ -5,7 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import UploadPage from "./pages/UploadPage";
 import StudyGuidePage from "./pages/StudyGuidePage";
 import NotesPage from "./pages/NotesPage";
-
+import FlashcardsPage from "./pages/FlashcardsPage";
 function App() {
   return (
     <BrowserRouter>
@@ -15,6 +15,9 @@ function App() {
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/study-guide" element={<StudyGuidePage />} />
         <Route path="/notes" element={<NotesPage />} />
+        <Route path="/flashcards"
+  element={<FlashcardsPage />}
+/>
       </Routes>
     </BrowserRouter>
   );
