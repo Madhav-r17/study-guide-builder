@@ -1,14 +1,49 @@
-
 import { Link } from "react-router-dom";
 
 export default function LandingPage() {
   return (
-    <div style={{ padding: "40px" }}>
-      <h1>Interactive Study Guide Builder</h1>
+    <div
+      style={{
+        textAlign: "center",
+        padding: "60px"
+      }}
+    >
+      <h1>📚 Study Guide Builder</h1>
 
-      <p>Upload notes and create interactive study guides.</p>
+      <p>
+        Organize notes, generate study guides,
+        and learn with flashcards.
+      </p>
 
-      <Link to="/dashboard">Get Started</Link>
+      <div
+        style={{
+          marginTop: "30px",
+          display: "flex",
+          justifyContent: "center",
+          gap: "15px",
+          flexWrap: "wrap"
+        }}
+      >
+        <Link to="/upload">
+          <button>Upload Notes</button>
+        </Link>
+
+        <Link to="/notes">
+          <button>View Notes</button>
+        </Link>
+
+        <Link to="/study-guide">
+          <button>Study Guide</button>
+        </Link>
+
+        <Link to="/flashcards">
+          <button>Flashcards</button>
+        </Link>
+
+        <Link to="/dashboard">
+          <button>Dashboard</button>
+        </Link>
+      </div>
     </div>
   );
 }

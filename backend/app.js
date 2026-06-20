@@ -122,4 +122,20 @@ app.put("/api/notes/:id", (req, res) => {
     });
   });
 });
+app.get("/api/recent-notes", (req, res) => {
+  const sql =
+    "SELECT * FROM notes ORDER BY created_at DESC LIMIT 5";
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Failed to fetch recent notes"
+      });
+    }
+
+    res.json(results);
+  });
+});
 module.exports = app;

@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 
 export default function DashboardPage() {
+  
   const [stats, setStats] = useState([]);
+  const [recentNotes, setRecentNotes] = useState([]);
 
   useEffect(() => {
     api.get("/stats")
       .then((res) => setStats(res.data))
+      .catch((err) => console.error(err));
+    api.get("/recent-notes")
+      .then((res) => setRecentNotes(res.data))
       .catch((err) => console.error(err));
   }, []);
 
@@ -64,6 +69,25 @@ export default function DashboardPage() {
         </div>
       ))}
     </div>
+    <hr style={{ margin: "30px 0" }} />
+
+<h2>Recent Notes</h2>
+
+{recentNotes.map((note) => (
+  <div
+    key={note.id}
+    style={{
+      border: "1px solid #ddd",
+      padding: "10px",
+      marginBottom: "10px",
+      borderRadius: "8px"
+    }}
+  >
+    <strong>{note.title}</strong>
+    <p>{note.category}</p>
   </div>
+))}
+  </div>
+  
 );
 }
