@@ -10,15 +10,35 @@ app.use(express.json());
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+app.get("/api/study-guide/:category", (req, res) => {
+  const { category } = req.params;
 
-app.post('/api/notes', (req, res) => {
-  const { title, content } = req.body;
+  const sql =
+    "SELECT * FROM notes WHERE category = ? ORDER BY created_at DESC";
 
-  const sql = 'INSERT INTO notes (title, content) VALUES (?, ?)';
-
-  db.query(sql, [title, content], (err, result) => {
+  db.query(sql, [category], (err, results) => {
     if (err) {
       console.error(err);
+
+      return res.status(500).json({
+        message: "Failed to fetch study guide"
+      });
+    }
+
+    res.json(results);
+  });
+});
+
+app.post('/api/notes', (req, res) => {
+  const { title, content, category } = req.body;
+
+  const sql =
+    'INSERT INTO notes (title, content, category) VALUES (?, ?, ?)';
+
+  db.query(sql, [title, content, category], (err, result) => {
+    if (err) {
+      console.error(err);
+
       return res.status(500).json({
         message: 'Failed to save note'
       });
