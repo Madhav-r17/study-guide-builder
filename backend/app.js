@@ -29,7 +29,23 @@ app.get("/api/study-guide/:category", (req, res) => {
     res.json(results);
   });
 });
+app.get("/api/stats", (req, res) => {
+  const sql = `
+    SELECT category, COUNT(*) as count
+    FROM notes
+    GROUP BY category
+  `;
 
+  db.query(sql, (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Failed to fetch stats"
+      });
+    }
+
+    res.json(results);
+  });
+});
 app.post('/api/notes', (req, res) => {
   const { title, content, category } = req.body;
 
