@@ -1,4 +1,5 @@
-const app = require('./app');
+const app = require("./app");
+require("./config/db");
 
 const PORT = 5000;
 
