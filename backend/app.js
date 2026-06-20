@@ -30,5 +30,59 @@ app.post('/api/notes', (req, res) => {
     });
   });
 });
+app.get("/api/notes", (req, res) => {
+  const sql = "SELECT * FROM notes ORDER BY created_at DESC";
 
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Failed to fetch notes"
+      });
+    }
+
+    res.json(results);
+  });
+});
+app.delete("/api/notes/:id", (req, res) => {
+  const { id } = req.params;
+
+  const sql = "DELETE FROM notes WHERE id = ?";
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Failed to delete note"
+      });
+    }
+
+    res.json({
+      message: "Note deleted successfully"
+    });
+  });
+});
+app.put("/api/notes/:id", (req, res) => {
+  const { id } = req.params;
+  const { title, content } = req.body;
+
+  const sql =
+    "UPDATE notes SET title = ?, content = ? WHERE id = ?";
+
+  db.query(sql, [title, content, id], (err, result) => {
+    if (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Failed to update note"
+      });
+    }
+
+    res.json({
+      message: "Note updated successfully"
+    });
+  });
+});
 module.exports = app;
