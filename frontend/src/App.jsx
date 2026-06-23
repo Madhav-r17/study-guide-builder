@@ -6,6 +6,7 @@ import UploadPage from "./pages/UploadPage";
 import StudyGuidePage from "./pages/StudyGuidePage";
 import NotesPage from "./pages/NotesPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
+import AIStudyGuidePage from "./pages/AIStudyGuidePage";
 function App() {
   return (
     <BrowserRouter>
@@ -15,10 +16,9 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/study-guide" element={<StudyGuidePage />} />
+        <Route path="/ai-study-guide" element={<AIStudyGuidePage />}/>
         <Route path="/notes" element={<NotesPage />} />
-        <Route path="/flashcards"
-  element={<FlashcardsPage />}
-/>
+        <Route path="/flashcards" element={<FlashcardsPage />}/>
       </Routes>
     </BrowserRouter>
   );

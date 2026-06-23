@@ -17,6 +17,7 @@ export default function Navbar() {
       <Link to="/study-guide">Study Guide</Link>
       <Link to="/flashcards">Flashcards</Link>
       <Link to="/dashboard">Dashboard</Link>
+      <Link to="/ai-study-guide">AI Study Guide</Link>
     </nav>
   );
 }
