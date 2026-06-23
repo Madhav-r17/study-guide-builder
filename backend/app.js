@@ -4,7 +4,7 @@ const cors = require('cors');
 const db = require('./config/db');
 
 const app = express();
-
+const { generateStudyGuide,} = require("./services/gemini");
 app.use(cors());
 app.use(express.json());
 
@@ -137,5 +137,20 @@ app.get("/api/recent-notes", (req, res) => {
 
     res.json(results);
   });
+});
+app.post("/api/generate-guide", async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    const guide = await generateStudyGuide(text);
+
+    res.json({ guide });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to generate guide",
+    });
+  }
 });
 module.exports = app;
