@@ -1,62 +1,86 @@
 import { useState } from "react";
 
 export default function AIStudyGuidePage() {
-  const [inputText, setInputText] = useState("");
-  const [outputText, setOutputText] = useState("");
+  const [file, setFile] = useState(null);
+  const [outputType, setOutputType] = useState("pdf");
+  const [loading, setLoading] = useState(false);
 
-  const generateGuide = async () => {
+  const generateGuideFile = async () => {
+    if (!file) {
+      alert("Please select a PDF or DOCX file");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("outputType", outputType);
+
     try {
+      setLoading(true);
+
       const response = await fetch(
-        "http://localhost:5000/api/generate-guide",
+        "http://localhost:5000/api/generate-guide-file",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: inputText,
-          }),
+          body: formData,
         }
       );
 
-      const data = await response.json();
+      if (!response.ok) {
+        alert("Failed to generate file");
+        return;
+      }
 
-      setOutputText(data.guide);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        outputType === "docx"
+          ? "study-guide.docx"
+          : "study-guide.pdf";
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error(error);
-      alert("Failed to generate guide");
+      alert("Error generating file");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>🤖 AI Study Guide Generator</h1>
+      <h1>AI Study Guide File Generator</h1>
 
-      <textarea
-        rows="12"
-        cols="80"
-        placeholder="Paste your study material here..."
-        value={inputText}
-        onChange={(e) =>
-          setInputText(e.target.value)
-        }
+      <p>Upload a PDF or DOCX file and download the generated study guide.</p>
+
+      <input
+        type="file"
+        accept=".pdf,.docx"
+        onChange={(e) => setFile(e.target.files[0])}
       />
 
       <br /><br />
 
-      <button onClick={generateGuide}>
-        Generate Study Guide
+      <select
+        value={outputType}
+        onChange={(e) => setOutputType(e.target.value)}
+      >
+        <option value="pdf">Download as PDF</option>
+        <option value="docx">Download as DOCX</option>
+      </select>
+
+      <br /><br />
+
+      <button onClick={generateGuideFile} disabled={loading}>
+        {loading ? "Generating..." : "Generate Study Guide File"}
       </button>
-
-      <br /><br />
-
-      <textarea
-        rows="12"
-        cols="80"
-        value={outputText}
-        readOnly
-        placeholder="Generated study guide will appear here..."
-      />
     </div>
   );
 }
