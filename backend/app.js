@@ -1,8 +1,16 @@
-
+const PDFDocument = require("pdfkit");
+const { Document, Packer, Paragraph, TextRun } = require("docx");
+const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const mammoth = require("mammoth");
+const fs = require("fs");
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
-
+const upload = multer({ dest: "uploads/" });
 const app = express();
 const { generateStudyGuide,} = require("./services/gemini");
 app.use(cors());
@@ -138,18 +146,97 @@ app.get("/api/recent-notes", (req, res) => {
     res.json(results);
   });
 });
-app.post("/api/generate-guide", async (req, res) => {
+app.post("/api/generate-guide-file", upload.single("file"), async (req, res) => {
   try {
-    const { text } = req.body;
+    let extractedText = "";
 
-    const guide = await generateStudyGuide(text);
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
-    res.json({ guide });
+    const filePath = req.file.path;
+    const originalName = req.file.originalname.toLowerCase();
+    const outputType = req.body.outputType || "pdf";
+
+    if (originalName.endsWith(".pdf")) {
+      const dataBuffer = fs.readFileSync(filePath);
+      const pdfData = await pdfParse(dataBuffer);
+      extractedText = pdfData.text;
+    } else if (originalName.endsWith(".docx")) {
+      const result = await mammoth.extractRawText({ path: filePath });
+      extractedText = result.value;
+    } else {
+      fs.unlinkSync(filePath);
+      return res.status(400).json({
+        message: "Only PDF and DOCX files are supported",
+      });
+    }
+
+    fs.unlinkSync(filePath);
+
+    const guide = await generateStudyGuide(extractedText);
+
+    if (outputType === "docx") {
+      const doc = new Document({
+        sections: [
+          {
+            children: guide.split("\n").map(
+              (line) =>
+                new Paragraph({
+                  children: [
+                    new TextRun(line),
+                  ],
+                })
+            ),
+          },
+        ],
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=study-guide.docx"
+      );
+
+      return res.send(buffer);
+    }
+
+    const pdfDoc = new PDFDocument();
+    const chunks = [];
+
+    pdfDoc.on("data", (chunk) => chunks.push(chunk));
+    pdfDoc.on("end", () => {
+      const pdfBuffer = Buffer.concat(chunks);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=study-guide.pdf"
+      );
+
+      res.send(pdfBuffer);
+    });
+
+    pdfDoc.fontSize(18).text("Generated Study Guide", {
+      align: "center",
+    });
+
+    pdfDoc.moveDown();
+
+    pdfDoc.fontSize(12).text(guide, {
+      align: "left",
+    });
+
+    pdfDoc.end();
   } catch (error) {
     console.error(error);
-
     res.status(500).json({
-      message: "Failed to generate guide",
+      message: "Failed to generate guide from file",
     });
   }
 });
