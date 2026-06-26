@@ -1,9 +1,9 @@
 const mysql = require("mysql2");
 
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "password",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
   multipleStatements: true,
 });
 
@@ -17,8 +17,8 @@ connection.connect((err) => {
 
   connection.query(
     `
-    CREATE DATABASE IF NOT EXISTS studyguide;
-    USE studyguide;
+    CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME};
+    USE ${process.env.DB_NAME};
 
     CREATE TABLE IF NOT EXISTS notes (
       id INT AUTO_INCREMENT PRIMARY KEY,
