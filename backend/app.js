@@ -1,4 +1,7 @@
 const PDFDocument = require("pdfkit");
+const FONT_REGULAR = "./fonts/NotoSans-Regular.ttf";
+const FONT_BOLD    = "./fonts/NotoSans-Bold.ttf";
+const FONT_PATH = "./fonts/NotoSans-Regular.ttf"; 
 const { Document, Packer, Paragraph, TextRun } = require("docx");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -206,38 +209,215 @@ app.post("/api/generate-guide-file", upload.single("file"), async (req, res) => 
       return res.send(buffer);
     }
 
-    const pdfDoc = new PDFDocument();
-    const chunks = [];
+// ─── PDF Generation ───────────────────────────────────────────────
+const FONT_REGULAR = "./fonts/NotoSans-Regular.ttf";
+const FONT_BOLD    = "./fonts/NotoSans-Bold.ttf";      // download this too
+const PAGE_MARGIN  = 50;
+const CONTENT_WIDTH = 595.28 - PAGE_MARGIN * 2;        // A4 width
 
-    pdfDoc.on("data", (chunk) => chunks.push(chunk));
-    pdfDoc.on("end", () => {
-      const pdfBuffer = Buffer.concat(chunks);
+const doc = new PDFDocument({ margin: PAGE_MARGIN, font: FONT_REGULAR });
+const chunks = [];
 
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=study-guide.pdf"
-      );
+doc.on("data", (chunk) => chunks.push(chunk));
+doc.on("end", () => {
+  const pdfBuffer = Buffer.concat(chunks);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "attachment; filename=study-guide.pdf");
+  res.send(pdfBuffer);
+});
 
-      res.send(pdfBuffer);
+// ── helper: render a line with inline **bold** spans ──────────────
+// Renders a line with **bold** spans by manually positioning each word.
+// Avoids pdfkit's continued+font-switch wrapping bug entirely.
+function renderInline(doc, text, fontSize, color = "#1a1a1a", startX = null) {
+  const x0 = startX !== null ? startX : doc.x;
+  const maxWidth = doc.page.width - doc.page.margins.right - x0;
+  const lineHeight = fontSize * 1.4;
+
+  // tokenize into {text, bold} words, preserving spaces
+  const tokens = [];
+  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  segments.forEach((seg) => {
+    if (!seg) return;
+    const isBold = seg.startsWith("**") && seg.endsWith("**");
+    const clean = isBold ? seg.slice(2, -2) : seg;
+    clean.split(/(\s+)/).forEach((w) => {
+      if (w) tokens.push({ text: w, bold: isBold });
     });
+  });
 
-    pdfDoc.fontSize(18).text("Generated Study Guide", {
-      align: "center",
-    });
+  let cx = x0;
+  let cy = doc.y;
 
-    pdfDoc.moveDown();
+  tokens.forEach((tok) => {
+    doc.font(tok.bold ? FONT_BOLD : FONT_REGULAR).fontSize(fontSize).fillColor(color);
+    const w = doc.widthOfString(tok.text);
 
-    pdfDoc.fontSize(12).text(guide, {
-      align: "left",
-    });
+    // wrap to next line if this word doesn't fit (skip wrap on bare whitespace)
+    if (cx + w > x0 + maxWidth && tok.text.trim() !== "") {
+      cx = x0;
+      cy += lineHeight;
+    }
 
-    pdfDoc.end();
+    doc.text(tok.text, cx, cy, { lineBreak: false });
+    cx += w;
+  });
+
+  doc.x = x0;
+  doc.y = cy + lineHeight;
+}
+
+// ── markdown renderer ─────────────────────────────────────────────
+const lines = guide.split("\n");
+let i = 0;
+
+while (i < lines.length) {
+  const raw = lines[i];
+  const line = raw.trim();
+
+  // blank line → small gap
+  if (!line) {
+    doc.moveDown(0.3);
+    i++;
+    continue;
+  }
+
+  // H1  #
+  if (/^# /.test(line)) {
+    doc.moveDown(0.5);
+    doc.font(FONT_BOLD).fontSize(20).fillColor("#1a1a1a");
+    doc.text(line.replace(/^# /, ""), { width: CONTENT_WIDTH });
+    doc.moveDown(0.4);
+    // underline rule
+    const y = doc.y;
+    doc.moveTo(PAGE_MARGIN, y).lineTo(PAGE_MARGIN + CONTENT_WIDTH, y)
+       .strokeColor("#cccccc").lineWidth(1).stroke();
+    doc.moveDown(0.4);
+    i++;
+    continue;
+  }
+
+  // H2  ##
+  if (/^## /.test(line)) {
+    doc.moveDown(0.6);
+    doc.font(FONT_BOLD).fontSize(16).fillColor("#2c2c2c");
+    doc.text(line.replace(/^## /, ""), { width: CONTENT_WIDTH });
+    doc.moveDown(0.3);
+    i++;
+    continue;
+  }
+
+  // H3  ###
+  if (/^### /.test(line)) {
+    doc.moveDown(0.4);
+    doc.font(FONT_BOLD).fontSize(13).fillColor("#3a3a3a");
+    doc.text(line.replace(/^### /, ""), { width: CONTENT_WIDTH });
+    doc.moveDown(0.2);
+    i++;
+    continue;
+  }
+
+  // horizontal rule  ---
+  if (/^---+$/.test(line)) {
+    doc.moveDown(0.4);
+    const y = doc.y;
+    doc.moveTo(PAGE_MARGIN, y).lineTo(PAGE_MARGIN + CONTENT_WIDTH, y)
+       .strokeColor("#dddddd").lineWidth(0.5).stroke();
+    doc.moveDown(0.4);
+    i++;
+    continue;
+  }
+
+  // ⭐ Exam Tip  or  📌 Quick Revision  or  📖 FAQ  (emoji lines)
+ if (/^[⭐📌📖]/.test(line)) {
+  doc.moveDown(0.5);
+  const cleanLine = line.replace(/[⭐📌📖]/g, "").trim();
+  const icon = line[0];
+
+  doc.font(FONT_BOLD).fontSize(11);
+  const textHeight = doc.heightOfString(icon + " " + cleanLine, {
+    width: CONTENT_WIDTH - 12,
+  });
+  const boxHeight = textHeight + 8;
+  const boxY = doc.y;
+
+  doc.rect(PAGE_MARGIN, boxY, CONTENT_WIDTH, boxHeight).fill("#fff8e1");
+  doc.fillColor("#b8860b");
+  doc.text(icon + " " + cleanLine, PAGE_MARGIN + 6, boxY + 4, {
+    width: CONTENT_WIDTH - 12,
+  });
+
+  doc.y = boxY + boxHeight;
+  doc.moveDown(0.4);
+  i++;
+  continue;
+}
+// bullet  * or -  (top level)
+if (/^[\*\-] /.test(line)) {
+  const text = line.replace(/^[\*\-] /, "");
+  const bulletX = PAGE_MARGIN + 8;
+  doc.font(FONT_REGULAR).fontSize(10).fillColor("#1a1a1a");
+  doc.text("•", bulletX, doc.y, { lineBreak: false });
+  renderInline(doc, text, 10, "#1a1a1a", bulletX + 12);
+  doc.moveDown(0.1);
+  i++;
+  continue;
+}
+
+// sub-bullet
+if (/^ {2,}[\*\-] /.test(raw)) {
+  const text = raw.replace(/^ +[\*\-] /, "");
+  const bulletX = PAGE_MARGIN + 22;
+  doc.font(FONT_REGULAR).fontSize(10).fillColor("#444444");
+  doc.text("◦", bulletX, doc.y, { lineBreak: false });
+  renderInline(doc, text, 10, "#444444", bulletX + 12);
+  doc.moveDown(0.1);
+  i++;
+  continue;
+}
+
+// numbered list
+if (/^\d+\. /.test(line)) {
+  const num  = line.match(/^(\d+)\./)[1];
+  const text = line.replace(/^\d+\. /, "");
+  const bulletX = PAGE_MARGIN + 8;
+  doc.font(FONT_BOLD).fontSize(10).fillColor("#1a1a1a");
+  doc.text(num + ".", bulletX, doc.y, { lineBreak: false });
+  renderInline(doc, text, 10, "#1a1a1a", bulletX + 20);
+  doc.moveDown(0.15);
+  i++;
+  continue;
+}
+  // normal paragraph
+// normal paragraph
+renderInline(doc, line, 10, "#1a1a1a", PAGE_MARGIN);
+doc.moveDown(0.2);
+i++;
+}
+
+doc.end();
   } catch (error) {
     console.error(error);
     res.status(500).json({
       message: "Failed to generate guide from file",
     });
+  }
+});
+app.post("/api/generate-guide", async (req, res) => {
+  try {
+    const { text, category } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "No text provided" });
+    }
+
+    const guide = await generateStudyGuide(text);
+
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.json({ guide });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to generate guide" });
   }
 });
 module.exports = app;
