@@ -3,7 +3,7 @@ import api from "../services/api";
 import PageHeader from "../components/PageHeader";
 import Card from "../components/Card";
 import Button from "../components/Button";
-import CategoryTag, { categoryColor } from "../components/Categorytag.jsx";
+import CategoryTag, { categoryColor } from "../components/CategoryTag.jsx";
 import EmptyState from "../components/EmptyState";
 import Spinner from "../components/Spinner";
 

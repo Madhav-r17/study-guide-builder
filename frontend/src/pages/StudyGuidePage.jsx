@@ -5,7 +5,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
 import Spinner from "../components/Spinner";
-import { CATEGORY_OPTIONS, categoryColor } from "../components/Categorytag.jsx";
+import { CATEGORY_OPTIONS, categoryColor } from "../components/CategoryTag.jsx";
 import { Search } from "lucide-react";
 
 export default function StudyGuidePage() {

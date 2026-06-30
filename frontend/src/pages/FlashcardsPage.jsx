@@ -4,7 +4,7 @@ import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
 import Spinner from "../components/Spinner";
-import { CATEGORY_OPTIONS } from "../components/Categorytag.jsx";
+import { CATEGORY_OPTIONS } from "../components/CategoryTag.jsx";
 
 export default function FlashcardsPage() {
   const [category, setCategory] = useState("DBMS");

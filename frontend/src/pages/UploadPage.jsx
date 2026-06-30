@@ -4,7 +4,7 @@ import PageHeader from "../components/PageHeader";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import Spinner from "../components/Spinner";
-import { CATEGORY_OPTIONS } from "../components/Categorytag.jsx";
+import { CATEGORY_OPTIONS } from "../components/CategoryTag.jsx";
 
 export default function UploadPage() {
   const [title, setTitle] = useState("");

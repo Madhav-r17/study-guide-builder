@@ -4,7 +4,7 @@ import PageHeader from "../components/PageHeader";
 import Card from "../components/Card";
 import EmptyState from "../components/EmptyState";
 import Spinner from "../components/Spinner";
-import CategoryTag, { categoryColor } from "../components/Categorytag.jsx";
+import CategoryTag, { categoryColor } from "../components/CategoryTag.jsx";
 import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
