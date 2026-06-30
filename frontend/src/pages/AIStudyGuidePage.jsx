@@ -1,9 +1,9 @@
 import { useState } from "react";
-import PageHeader from "../components/PageHeader";
+import PageHeader from "../components/PageHeader.jsx";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import Spinner from "../components/Spinner";
-import { CATEGORY_OPTIONS } from "../components/Categorytag.jsx";
+import { CATEGORY_OPTIONS } from "../components/CategoryTag.jsx";
 import { Sparkles, Upload, FileDown } from "lucide-react";
 
 export default function AIStudyGuidePage() {
